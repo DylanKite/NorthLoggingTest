@@ -27,11 +27,13 @@ public:
     ~logging_server();
 
     int log_message(char *to_log);
+    void send_logs(log_level determined_level);
 private:
     int start_server();
     int read_socket();
     int parse_socket_message(char *incoming_message, log_level *current_level, string *client_id, string *message);
-    void dump_logs();
+    int parse_log_level(char *level);
+    void dump_logs(char *level);
     void clear_logs();
 
     int server_fd;

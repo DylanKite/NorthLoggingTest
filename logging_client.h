@@ -11,6 +11,7 @@ public:
     ~logging_client();
 
     void send_message(string message, string client_id, int selected_level);
+    void request_dump(log_level level);
 private:
     void connect_to_socket();
 
