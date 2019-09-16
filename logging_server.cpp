@@ -56,10 +56,12 @@ int logging_server::parse_socket_message(char *incoming_message, log_level *curr
     case 3: // dump log
     {
         return level_or_command;
+        break;
     }
     case 4: // clear log
     {
         return level_or_command;
+        break;
     }
     default:
     {
@@ -121,6 +123,7 @@ int logging_server::parse_log_level(char *level)
     default:
     {
         return -1;
+        break;
     }
     }
     return -1;
@@ -131,28 +134,31 @@ void logging_server::send_logs(log_level determined_level)
     fstream f_log;
     string message_line;
     string end_of_file("EOF");
-
+    string to_send("");
     f_log.open("./log", fstream::in);
 
     switch(determined_level)
     {
     case INFO:
     {
+       // for(int i =0; i < 10; i++)
         while(getline(f_log, message_line))
         {
 
             if(message_line.find("Info") != string::npos)
             {
-                cout << message_line;
-                send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
+              //  cout << message_line;
+                //send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
+                to_send += message_line + "\n";
                 cout << "\n";
             }
             else
             {
-                cout << "not here";
+               // cout << "not here";
                 cout << "\n";
             }
         }
+        break;
     }
     case WARNING:
     {
@@ -162,7 +168,7 @@ void logging_server::send_logs(log_level determined_level)
             if(message_line.find("Warning") != string::npos)
             {
                 cout << message_line;
-                send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
+      //          send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
                 cout << "\n";
             }
             else
@@ -171,6 +177,7 @@ void logging_server::send_logs(log_level determined_level)
                 cout << "\n";
             }
         }
+        break;
     }
     case ERROR:
     {
@@ -180,7 +187,7 @@ void logging_server::send_logs(log_level determined_level)
             if(message_line.find("Error") != string::npos)
             {
                 cout << message_line;
-                send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
+    //            send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
                 cout << "\n";
             }
             else
@@ -189,9 +196,15 @@ void logging_server::send_logs(log_level determined_level)
                 cout << "\n";
             }
         }
+        break;
     }
     }
+    sleep(1);
+    cout << to_send;
+    send(new_socket, to_send.c_str(), (strlen(to_send.c_str()) + 1), 0);
+    sleep(1);
     send(new_socket, end_of_file.c_str(), (strlen(end_of_file.c_str()) + 1), 0);
+    cout << "EOF";
     f_log.close();
 }
 
@@ -205,14 +218,22 @@ void logging_server::dump_logs(char *level)
     case INFO:
     {
         send_logs(INFO);
+        break;
     }
     case WARNING:
     {
         send_logs(INFO);
+        break;
     }
     case ERROR:
     {
         send_logs(INFO);
+        break;
+    }
+    default:
+    {
+        cout << "error determine level";
+        break;
     }
     }
 }
@@ -220,6 +241,7 @@ void logging_server::dump_logs(char *level)
 void logging_server::clear_logs()
 {
     fstream f_log;
+    cout << "cleaering Logs";
     f_log.open("./log", fstream::out | ios::trunc);
     f_log << "";
     f_log.close();
@@ -251,17 +273,20 @@ int logging_server::log_message(char *to_log)
     string log_message;
     static string old_log_message("empty");
     command_or_log = parse_socket_message(to_log, &message_level, &client_id, &message);
-
+    cout << *to_log;
+    cout << command_or_log;
     switch(command_or_log)
     {
     case 3: // dump log
     {
+        cout << "dumping logs";
         dump_logs(to_log);
         return 3;
         break;
     }
     case 4: // clear log
     {
+        cout << "clearing logs";
         clear_logs();
         return 4;
         break;
@@ -288,6 +313,7 @@ int logging_server::log_message(char *to_log)
         break;
     }
     }
+
     if (log_message.compare(old_log_message) != 0)
     {
         f_log << log_message;
@@ -314,12 +340,19 @@ int logging_server::read_socket()
 {
     int n_bytes_read;
     char message[MESSAGE_SIZE];
+    string string_message;
+    string old_string_message("EMPTY");
 
-    //time permitting replace with poll()?
     n_bytes_read = read(new_socket , message, MESSAGE_SIZE);
-    if (!n_bytes_read)
+    string_message= message;
+
+    if (n_bytes_read != 0)
     {
-        log_message(message);
+        if (string_message.compare(old_string_message) != 0)
+        {
+            log_message(message);
+            old_string_message = string_message;
+        }
         return 1;
     }
     return 0;
@@ -346,17 +379,18 @@ int logging_server::start_server()
 
 logging_server::logging_server()
 {
-    /*
+
     cout << "starting server\n";
     start_server();
     cout << "client connected\n";
 
     //infinate loop to read the socket forever
-    for(;;)
-    {
+   // for(;;)
+   // {
         read_socket();
-    }
-    */
+        sleep(1);
+   // }
+
 }
 logging_server::~logging_server()
 {
@@ -366,10 +400,11 @@ logging_server::~logging_server()
 int main()
 {
     logging_server start_log;
-    //start_log.log_message("1, Dylan, this is an example of the message");
-    start_log.send_logs(INFO);
-    start_log.send_logs(WARNING);
-    start_log.send_logs(ERROR);
 
+    //start_log.log_message("1, Dylan, this is an example of the message");
+    //start_log.send_logs(INFO);
+    //tart_log.send_logs(WARNING);
+    //start_log.send_logs(ERROR);
+    //start_log.log_message("4");
     return 1;
 }
