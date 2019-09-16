@@ -14,7 +14,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-// may need to install bsd library this is used for strlcpy
+// may need to install libbsd this is used for strlcpy
 #include <bsd/string.h>
 
 #define MESSAGE_SIZE 1024
@@ -135,77 +135,54 @@ void logging_server::send_logs(log_level determined_level)
     string message_line;
     string end_of_file("EOF");
     string to_send("");
-    f_log.open("./log", fstream::in);
 
+    f_log.open("./log", fstream::in);
     switch(determined_level)
     {
+    // INFO collects all log levels
     case INFO:
     {
-       // for(int i =0; i < 10; i++)
         while(getline(f_log, message_line))
         {
-
-            if(message_line.find("Info") != string::npos)
-            {
-              //  cout << message_line;
-                //send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
-                to_send += message_line + "\n";
-                cout << "\n";
-            }
-            else
-            {
-               // cout << "not here";
-                cout << "\n";
-            }
+            to_send += message_line + "\n";
         }
         break;
     }
+    //WARNING collects the levels warning and error
     case WARNING:
     {
         while(getline(f_log, message_line))
         {
-
             if(message_line.find("Warning") != string::npos)
             {
-                cout << message_line;
-      //          send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
-                cout << "\n";
+                to_send += message_line + "\n";
             }
-            else
+            else if (message_line.find("Error") != string::npos)
             {
-                cout << "not here";
-                cout << "\n";
+                to_send += message_line + "\n";
             }
         }
         break;
     }
+    //ERROR collects only its own level
     case ERROR:
     {
         while(getline(f_log, message_line))
         {
-
             if(message_line.find("Error") != string::npos)
             {
-                cout << message_line;
-    //            send(new_socket, message_line.c_str(), (strlen(message_line.c_str()) + 1), 0);
-                cout << "\n";
-            }
-            else
-            {
-                cout << "not here";
-                cout << "\n";
+                to_send += message_line + "\n";
             }
         }
         break;
     }
     }
-    sleep(1);
-    cout << to_send;
-    send(new_socket, to_send.c_str(), (strlen(to_send.c_str()) + 1), 0);
+    f_log.close();
+
+    send(new_socket, to_send.c_str(), (to_send.size() + 1), 0);
+    //added to give time to read the socket and not miss the EOF
     sleep(1);
     send(new_socket, end_of_file.c_str(), (strlen(end_of_file.c_str()) + 1), 0);
-    cout << "EOF";
-    f_log.close();
 }
 
 void logging_server::dump_logs(char *level)
@@ -379,32 +356,26 @@ int logging_server::start_server()
 
 logging_server::logging_server()
 {
-
     cout << "starting server\n";
     start_server();
     cout << "client connected\n";
 
     //infinate loop to read the socket forever
-   // for(;;)
-   // {
+    for(;;)
+    {
         read_socket();
         sleep(1);
-   // }
+    }
 
 }
 logging_server::~logging_server()
 {
-
+        shutdown(new_socket, 2);
 }
 
 int main()
 {
     logging_server start_log;
 
-    //start_log.log_message("1, Dylan, this is an example of the message");
-    //start_log.send_logs(INFO);
-    //tart_log.send_logs(WARNING);
-    //start_log.send_logs(ERROR);
-    //start_log.log_message("4");
     return 1;
 }

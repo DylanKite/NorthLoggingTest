@@ -5,12 +5,7 @@
 #include <mutex>
 
 #include <netinet/in.h>
-/*
- * socket based program
- * when it recieves a message log it based on its log level using a time stamp and the message
- * use a mutex to prevent writes at the same time
- * assume being ran on a posix system
- */
+
 #define PORT 8080
 enum log_level
 {
@@ -26,8 +21,8 @@ public:
     logging_server();
     ~logging_server();
 
-    void send_logs(log_level determined_level);
 private:
+    void send_logs(log_level determined_level);
     int log_message(char *to_log);
     void clear_logs();
     int start_server();
